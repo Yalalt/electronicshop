@@ -1,67 +1,84 @@
-import { CATEGORY, NAVIGATION } from "../../utils/data";
+import { CATEGORY, NAVIGATION } from "../utils/db/constants";
 import { useState } from "react";
+import { useProductContext } from "../component/ProductsContext";
 import ShowcaseHero from "../../component/ShowcaseHero";
 import Navbar from "../../component/subComponent/Navbar";
 import Logos from "../../component/Logos";
 import Footer from "../../component/Footer";
-import style from "./home.module.css";
-import { ProductsContext } from "../component/ProductsContext";
 import SpecialsProducts from "../../component/SpecialsProducts";
+import style from "./home.module.css";
 
 const Home = () => {
-  const products = 
+  const { products, setProducts } = useProductContext();
   let [selected, setSelected] = useState("all");
-  let [newData, setNewData] = useState();
   let [specialData, setSpecialData] = useState();
+  const [error, setError] = useState();
+  // let [newData, setNewData] = useState();
 
-  const saveData = (data) => {
-    const newSpecials = data.filter((item) => item.category === "special");
-    console.log("Specials data==> ", newSpecials);
-    setSpecialData(newSpecials);
-  }
 
-  // useEffect(() => {
-  //   axios.get("http://localhost:3008/products").then((res) => {
-  //     if (res.status === 200) {
-  //       const receivedData = res.data;
-  //       setNewData(receivedData);
-  //       console.log("Products list 0_0) ==> ", receivedData);
-  //       saveData(receivedData);
-  //     } else {
-  //       console.log("Not successful");
-  //     }
-  //   });
-  // }, []);
+  useEffect(() => {
+    const fetchProducts = async () => {
+      try {
+        const response = await axios
+          .get("http://localhost:3008/products")
+          .then((res) => {
+            if (res.status === 200) {
+              console.log("Successful", res);
+              return res;
+            } else {
+              console.log("Not successful");
+              setError(error);
+            }
+          });
+        const resProducts = await response.data;
+        return resProducts;
+      } catch (error) {
+        console.log("Products request axios Error uuslee", error);
+        setError(error);
+      }
+    };
+
+    fetchProducts().then((res) => {
+      setProducts(res);
+      console.log("response products==> ", res);
+    });
+  }, []);
+
+  // function saveData() {
+  //   const newSpecials = products.filter((item) => item.category === "special");
+  //   console.log("Specials data==> ", newSpecials);
+  //   setSpecialData(newSpecials);
+  // }
+
 
   // console.log("Data products===> ", newData);
 
-  const getCategory = (path) => {
-    const copyData = newData.filter((item) => {
-      if (item.category === path || path === "all") {
-        return item;
-      }
-    });
-    setSelected(path);
-    console.table(copyData);
-  };
+  // const getCategory = (path) => {
+  //   const copyData = newData.filter((item) => {
+  //     if (item.category === path || path === "all") {
+  //       return item;
+  //     }
+  //   });
+  //   setSelected(path);
+  //   console.table(copyData);
+  // };
 
   return (
     <div className={style.homeStyleMain}>
+      <Header />
       <ShowcaseHero />
       <div className={style.innerContainer}>
-        <ProductsContext.Provider value={{newData, specialData}}>
           <Navbar
             navigationMenus={NAVIGATION}
             getCategory={getCategory}
             selected={selected}
           />
-          {/* <Products
+          <Products
             category={CATEGORY}
             selected={selected}
-          /> */}
+          />
           {/* <MiddleContent /> */}
           <SpecialsProducts />
-        </ProductsContext.Provider>
         <Logos />
       </div>
       <Footer />
